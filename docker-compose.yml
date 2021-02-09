@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  mariadb:
+    image: wodby/mariadb:latest
+    container_name: "editdb_mariadb"
+    stop_grace_period: 30s
+    environment:
+      MYSQL_ROOT_PASSWORD: dbroot
+      MYSQL_DATABASE: db
+      MYSQL_USER: db
+      MYSQL_PASSWORD: db
+    tmpfs:
+      /var/lib/mysql
+#    volumes:
+#      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+#      - /path/to/mariadb/data/on/host:/var/lib/mysql # Use bind mount
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: "editdb_pma"
+    environment:
+      PMA_HOST: mariadb
+      PMA_USER: root
+      PMA_PASSWORD: dbroot
+      UPLOAD_LIMIT: 4G
+    labels:
+    - "traefik.http.routers.editdb_pma.rule=Host(`pma.docker.localhost`)"
+
+  traefik:
+    image: traefik:v2.0
+    container_name: "editdb_traefik"
+    command: --api.insecure=true --providers.docker
+    ports:
+    - '9999:80'
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
